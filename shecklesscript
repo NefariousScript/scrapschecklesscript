@@ -1,40 +1,327 @@
--- NEFARIOUS HUB - DELTA EXECUTOR COMPATIBLE
+-- NEFARIOUS HUB - ULTRA SAFE VERSION
+print("[NefariousHub] Script starting...")
+
+-- Wait for player to fully load
 local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 
-if not player then return end
+if not player then
+    print("[NefariousHub] ERROR: No player found!")
+    return
+end
 
-print("[NefariousHub] Starting initialization...")
+print("[NefariousHub] Player found: " .. player.Name)
+
+-- WAIT FOR EVERYTHING TO LOAD
+print("[NefariousHub] Waiting for game to load...")
+wait(2) -- Give the game time to load
+
+-- Now get services
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
+print("[NefariousHub] Services loaded")
 
 ----------------------------------------------------
--- SAFE LOADING SCREEN
-local function showLoadingScreen()
+-- GET LEADERSTATS & SHECKLES
+----------------------------------------------------
+local Sheckles = nil
+local maxWait = 10
+local startTime = tick()
+
+while not Sheckles and (tick() - startTime) < maxWait do
     pcall(function()
-        local loadingGui = Instance.new("ScreenGui")
-        loadingGui.Name = "NefariousLoadingUI"
-        loadingGui.Parent = player:WaitForChild("PlayerGui", 5)
-        if not loadingGui.Parent then return end
-        
-        loadingGui.ResetOnSpawn = false
-        loadingGui.IgnoreGuiInset = true
+        if player:FindFirstChild("leaderstats") then
+            local ls = player.leaderstats
+            if ls:FindFirstChild("Sheckles") then
+                Sheckles = ls.Sheckles
+                print("[NefariousHub] ✓ Sheckles found!")
+            end
+        end
+    end)
+    if not Sheckles then
+        wait(0.5)
+    end
+end
 
-        local bg = Instance.new("Frame", loadingGui)
-        bg.Size = UDim2.new(1, 0, 1, 0)
-        bg.BackgroundColor3 = Color3.fromRGB(32, 4, 46)
-        bg.BackgroundTransparency = 0.22
+if not Sheckles then
+    print("[NefariousHub] ERROR: Could not find Sheckles after waiting!")
+    return
+end
 
-        local loadingMain = Instance.new("Frame", bg)
-        loadingMain.Size = UDim2.new(0, 410, 0, 170)
-        loadingMain.Position = UDim2.new(0.5, -205, 0.5, -85)
-        loadingMain.BackgroundColor3 = Color3.fromRGB(24, 0, 32)
-        loadingMain.BorderSizePixel = 0
-        loadingMain.BackgroundTransparency = 0.04
-        Instance.new("UICorner", loadingMain).CornerRadius = UDim.new(0, 22)
+print("[NefariousHub] Ready to create GUI")
 
-        local title = Instance.new("TextLabel", loadingMain)
+----------------------------------------------------
+-- CREATE GUI
+----------------------------------------------------
+local PlayerGui = player:WaitForChild("PlayerGui")
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "NefariousHubGUI"
+gui.ResetOnSpawn = false
+gui.Parent = PlayerGui
+
+print("[NefariousHub] Creating main frame...")
+
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0, 340, 0, 320)
+main.Position = UDim2.new(0.5, -170, 0.5, -160)
+main.BackgroundColor3 = Color3.fromRGB(28, 10, 38)
+main.BorderSizePixel = 0
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 18)
+main.BackgroundTransparency = 0.04
+
+-- Stroke
+local stroke = Instance.new("UIStroke", main)
+stroke.Thickness = 2
+stroke.Color = Color3.fromRGB(150, 0, 255)
+stroke.Transparency = 0.17
+
+-- Gradient
+local gradient = Instance.new("UIGradient", main)
+gradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 0, 80)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 0, 18))
+}
+gradient.Rotation = 90
+
+-- TITLE BAR
+local titleBar = Instance.new("Frame", main)
+titleBar.Size = UDim2.new(1, 0, 0, 42)
+titleBar.BackgroundColor3 = Color3.fromRGB(34, 8, 48)
+titleBar.BorderSizePixel = 0
+Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0, 16)
+
+local titleText = Instance.new("TextLabel", titleBar)
+titleText.Size = UDim2.new(1, -50, 1, 0)
+titleText.Position = UDim2.new(0, 15, 0, 0)
+titleText.BackgroundTransparency = 1
+titleText.Text = "Nefarious Hub"
+titleText.TextColor3 = Color3.fromRGB(200, 100, 255)
+titleText.Font = Enum.Font.GothamBold
+titleText.TextSize = 24
+titleText.TextXAlignment = Enum.TextXAlignment.Left
+
+-- CLOSE BUTTON
+local closeBtn = Instance.new("TextButton", titleBar)
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(1, -35, 0, 6)
+closeBtn.BackgroundColor3 = Color3.fromRGB(55, 0, 90)
+closeBtn.Text = "×"
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.TextSize = 20
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.BorderSizePixel = 0
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 8)
+
+closeBtn.MouseButton1Click:Connect(function()
+    gui.Enabled = false
+end)
+
+-- CONTENT
+local content = Instance.new("Frame", main)
+content.Size = UDim2.new(1, -24, 1, -56)
+content.Position = UDim2.new(0, 12, 0, 44)
+content.BackgroundTransparency = 1
+
+-- TITLE
+local contentTitle = Instance.new("TextLabel", content)
+contentTitle.Size = UDim2.new(1, 0, 0, 20)
+contentTitle.Position = UDim2.new(0, 0, 0, 5)
+contentTitle.BackgroundTransparency = 1
+contentTitle.Text = "SHECKLES ADDER"
+contentTitle.TextColor3 = Color3.fromRGB(180, 100, 255)
+contentTitle.Font = Enum.Font.GothamBold
+contentTitle.TextSize = 12
+contentTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+-- BALANCE BOX
+local balanceBox = Instance.new("Frame", content)
+balanceBox.Size = UDim2.new(1, 0, 0, 50)
+balanceBox.Position = UDim2.new(0, 0, 0, 30)
+balanceBox.BackgroundColor3 = Color3.fromRGB(20, 5, 30)
+balanceBox.BorderSizePixel = 0
+Instance.new("UICorner", balanceBox).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", balanceBox).Color = Color3.fromRGB(100, 0, 180)
+
+local balanceLabel = Instance.new("TextLabel", balanceBox)
+balanceLabel.Size = UDim2.new(1, 0, 0.5, 0)
+balanceLabel.Position = UDim2.new(0, 0, 0, 0)
+balanceLabel.BackgroundTransparency = 1
+balanceLabel.Text = "Balance"
+balanceLabel.TextColor3 = Color3.fromRGB(150, 100, 200)
+balanceLabel.Font = Enum.Font.GothamBold
+balanceLabel.TextSize = 10
+
+local balanceAmount = Instance.new("TextLabel", balanceBox)
+balanceAmount.Size = UDim2.new(1, 0, 0.5, 0)
+balanceAmount.Position = UDim2.new(0, 0, 0.5, 0)
+balanceAmount.BackgroundTransparency = 1
+balanceAmount.Text = "$" .. tostring(Sheckles.Value)
+balanceAmount.TextColor3 = Color3.fromRGB(200, 100, 255)
+balanceAmount.Font = Enum.Font.GothamBold
+balanceAmount.TextSize = 18
+
+-- UPDATE BALANCE
+Sheckles.Changed:Connect(function(newValue)
+    balanceAmount.Text = "$" .. tostring(newValue)
+end)
+
+-- INPUT BOX
+local inputBox = Instance.new("TextBox", content)
+inputBox.Size = UDim2.new(1, 0, 0, 35)
+inputBox.Position = UDim2.new(0, 0, 0, 88)
+inputBox.BackgroundColor3 = Color3.fromRGB(20, 5, 30)
+inputBox.BorderSizePixel = 0
+inputBox.TextColor3 = Color3.fromRGB(200, 150, 255)
+inputBox.TextSize = 14
+inputBox.Font = Enum.Font.Gotham
+inputBox.PlaceholderText = "Enter amount..."
+inputBox.PlaceholderColor3 = Color3.fromRGB(100, 70, 130)
+Instance.new("UICorner", inputBox).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", inputBox).Color = Color3.fromRGB(100, 0, 180)
+
+-- ADD BUTTON
+local addButton = Instance.new("TextButton", content)
+addButton.Size = UDim2.new(1, 0, 0, 35)
+addButton.Position = UDim2.new(0, 0, 0, 130)
+addButton.BackgroundColor3 = Color3.fromRGB(100, 20, 180)
+addButton.Text = "+ ADD SHECKLES"
+addButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+addButton.TextSize = 13
+addButton.Font = Enum.Font.GothamBold
+addButton.BorderSizePixel = 0
+Instance.new("UICorner", addButton).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", addButton).Color = Color3.fromRGB(180, 80, 255)
+
+-- STATUS
+local statusLabel = Instance.new("TextLabel", content)
+statusLabel.Size = UDim2.new(1, 0, 0, 25)
+statusLabel.Position = UDim2.new(0, 0, 0, 170)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text = "Ready"
+statusLabel.TextColor3 = Color3.fromRGB(120, 100, 150)
+statusLabel.Font = Enum.Font.Gotham
+statusLabel.TextSize = 11
+statusLabel.TextXAlignment = Enum.TextXAlignment.Center
+
+-- QUICK BUTTONS
+local quickFrame = Instance.new("Frame", content)
+quickFrame.Size = UDim2.new(1, 0, 0, 35)
+quickFrame.Position = UDim2.new(0, 0, 0, 200)
+quickFrame.BackgroundTransparency = 1
+
+local quickLayout = Instance.new("UIListLayout", quickFrame)
+quickLayout.FillDirection = Enum.FillDirection.Horizontal
+quickLayout.Padding = UDim.new(0, 5)
+quickLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+for _, amount in ipairs({100, 500, 1000}) do
+    local btn = Instance.new("TextButton", quickFrame)
+    btn.Size = UDim2.new(0, 70, 1, 0)
+    btn.BackgroundColor3 = Color3.fromRGB(50, 10, 80)
+    btn.Text = amount.."$"
+    btn.TextColor3 = Color3.fromRGB(200, 100, 255)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 11
+    btn.BorderSizePixel = 0
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    
+    btn.MouseButton1Click:Connect(function()
+        inputBox.Text = tostring(amount)
+    end)
+end
+
+-- CREDIT
+local credit = Instance.new("TextLabel", content)
+credit.Size = UDim2.new(1, 0, 0, 15)
+credit.Position = UDim2.new(0, 0, 1, -15)
+credit.BackgroundTransparency = 1
+credit.Text = "by NefariousScript"
+credit.TextColor3 = Color3.fromRGB(130, 180, 255)
+credit.Font = Enum.Font.Gotham
+credit.TextSize = 10
+credit.TextXAlignment = Enum.TextXAlignment.Center
+
+----------------------------------------------------
+-- ADD SHECKLES FUNCTION
+----------------------------------------------------
+local function addSheckles()
+    local text = inputBox.Text
+    local amount = tonumber(text)
+    
+    if not amount or amount <= 0 then
+        statusLabel.Text = "Invalid amount!"
+        statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+        return
+    end
+    
+    if amount > 999999999 then
+        statusLabel.Text = "Too much!"
+        statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+        return
+    end
+    
+    -- ADD TO SHECKLES
+    Sheckles.Value = Sheckles.Value + amount
+    
+    statusLabel.Text = "✓ Added $" .. tostring(amount)
+    statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+    inputBox.Text = ""
+    
+    task.delay(2, function()
+        statusLabel.Text = "Ready"
+        statusLabel.TextColor3 = Color3.fromRGB(120, 100, 150)
+    end)
+end
+
+addButton.MouseButton1Click:Connect(addSheckles)
+inputBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        addSheckles()
+    end
+end)
+
+----------------------------------------------------
+-- DRAGGING
+----------------------------------------------------
+local dragging = false
+local dragStart = nil
+local startPos = nil
+
+titleBar.InputBegan:Connect(function(input, gpe)
+    if not gpe and input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = main.Position
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input, gpe)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        main.Position = UDim2.new(
+            startPos.X.Scale, startPos.X.Offset + delta.X,
+            startPos.Y.Scale, startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input, gpe)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+-- TOGGLE WITH RIGHT CTRL
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if not gpe and input.KeyCode == Enum.KeyCode.RightControl then
+        gui.Enabled = not gui.Enabled
+    end
+end)
+
+print("[NefariousHub] ✓ GUI loaded successfully!")
+print("[NefariousHub] RIGHT CTRL to toggle | Drag to move | Close button to hide")        local title = Instance.new("TextLabel", loadingMain)
         title.Position = UDim2.new(0, 74, 0, 28)
         title.Size = UDim2.new(1, -90, 0, 34)
         title.BackgroundTransparency = 1
