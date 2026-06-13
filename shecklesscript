@@ -2,6 +2,7 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 
 ----------------------------------------------------
@@ -83,11 +84,11 @@ local function showLoadingScreen()
 
     -- Animate the bar
     bar.Size = UDim2.new(0,0,1,0)
-    local totalTime = 8
-    local steps = 50
+    local totalTime = 2
+    local steps = 20
     for i = 1, steps do
         local progress = i / steps
-        TweenService:Create(bar, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {Size = UDim2.new(progress,0,1,0)}):Play()
+        TweenService:Create(bar, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {Size = UDim2.new(progress,0,1,0)}):Play()
         loadingText.Text = "Loading" .. string.rep(".", (i%4))
         wait(totalTime/steps)
     end
@@ -117,21 +118,22 @@ end
 showLoadingScreen()
 
 ----------------------------------------------------
--- GET REFERENCES (SHECKLES)
+-- SETUP CURRENCY SYSTEM
 ----------------------------------------------------
-local character = player.Character or player.CharacterAdded:Wait()
 local leaderstats = player:WaitForChild("leaderstats")
 local Sheckles = leaderstats:WaitForChild("Sheckles")
+local Networking = ReplicatedStorage:WaitForChild("SharedModules"):WaitForChild("Networking")
+
+print("[NefariousHub] ✓ Currency system initialized")
 
 ----------------------------------------------------
--- MAIN GUI
+-- MAIN GUI SETUP
 ----------------------------------------------------
 local gui = Instance.new("ScreenGui")
 gui.Name = "NefariousHubGUI"
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
--- MAIN FRAME
 local main = Instance.new("Frame", gui)
 main.Size = UDim2.new(0, 340, 0, 400)
 main.Position = UDim2.new(0.5, -170, 0.5, -200)
@@ -153,7 +155,7 @@ gradient.Color = ColorSequence.new{
 }
 gradient.Rotation = 90
 
--- TITLE BAR
+-- Title Bar
 local titleBar = Instance.new("Frame", main)
 titleBar.Size = UDim2.new(1, 0, 0, 42)
 titleBar.BackgroundColor3 = Color3.fromRGB(34, 8, 48)
@@ -173,7 +175,7 @@ title.TextXAlignment = Enum.TextXAlignment.Left
 title.TextStrokeTransparency = 0.7
 title.ClipsDescendants = true
 
--- MINIMIZE BUTTON
+-- Minimize button
 local minimizeBtn = Instance.new("TextButton", titleBar)
 minimizeBtn.Size = UDim2.new(0, 28, 0, 28)
 minimizeBtn.Position = UDim2.new(1, -34, 0, 7)
@@ -220,15 +222,11 @@ minimizeBtn.MouseLeave:Connect(function()
     end
 end)
 
--- CONTENT FRAME
+-- Content
 local content = Instance.new("Frame", main)
 content.Size = UDim2.new(1, 0, 1, -46)
 content.Position = UDim2.new(0, 0, 0, 44)
 content.BackgroundTransparency = 1
-
-----------------------------------------------------
--- SHECKLES ADDER SECTION
-----------------------------------------------------
 
 -- Section label
 local sectionLabel = Instance.new("TextLabel", content)
@@ -240,14 +238,6 @@ sectionLabel.TextColor3 = Color3.fromRGB(180, 80, 255)
 sectionLabel.Font = Enum.Font.GothamBold
 sectionLabel.TextSize = 11
 sectionLabel.TextXAlignment = Enum.TextXAlignment.Left
-
--- Divider line
-local divider = Instance.new("Frame", content)
-divider.Size = UDim2.new(1, -24, 0, 1)
-divider.Position = UDim2.new(0, 12, 0, 30)
-divider.BackgroundColor3 = Color3.fromRGB(100, 0, 180)
-divider.BackgroundTransparency = 0.5
-divider.BorderSizePixel = 0
 
 -- Balance display
 local balanceBg = Instance.new("Frame", content)
@@ -264,6 +254,307 @@ bStroke.Thickness = 1.5
 local balanceTopLabel = Instance.new("TextLabel", balanceBg)
 balanceTopLabel.Size = UDim2.new(1, 0, 0, 20)
 balanceTopLabel.Position = UDim2.new(0, 10, 0, 5)
+balanceTopLabel.BackgroundTransparency = 1
+balanceTopLabel.Text = "CURRENT SHECKLES"
+balanceTopLabel.TextColor3 = Color3.fromRGB(140, 80, 200)
+balanceTopLabel.Font = Enum.Font.GothamBold
+balanceTopLabel.TextSize = 10
+balanceTopLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local balanceValue = Instance.new("TextLabel", balanceBg)
+balanceValue.Size = UDim2.new(1, -10, 0, 26)
+balanceValue.Position = UDim2.new(0, 10, 0, 22)
+balanceValue.BackgroundTransparency = 1
+balanceValue.Text = "$" .. tostring(Sheckles.Value)
+balanceValue.TextColor3 = Color3.fromRGB(200, 100, 255)
+balanceValue.Font = Enum.Font.GothamBold
+balanceValue.TextSize = 20
+balanceValue.TextXAlignment = Enum.TextXAlignment.Left
+
+Sheckles.Changed:Connect(function(val)
+    balanceValue.Text = "$" .. tostring(val)
+    TweenService:Create(balanceValue, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+    task.delay(0.3, function()
+        TweenService:Create(balanceValue, TweenInfo.new(0.25), {TextColor3 = Color3.fromRGB(200, 100, 255)}):Play()
+    end)
+end)
+
+-- Input box
+local inputBg = Instance.new("Frame", content)
+inputBg.Size = UDim2.new(1, -24, 0, 36)
+inputBg.Position = UDim2.new(0, 12, 0, 98)
+inputBg.BackgroundColor3 = Color3.fromRGB(15, 0, 25)
+inputBg.BorderSizePixel = 0
+Instance.new("UICorner", inputBg).CornerRadius = UDim.new(0, 10)
+
+local iStroke = Instance.new("UIStroke", inputBg)
+iStroke.Color = Color3.fromRGB(100, 0, 180)
+iStroke.Thickness = 1.5
+
+local textBox = Instance.new("TextBox", inputBg)
+textBox.Size = UDim2.new(1, -16, 1, 0)
+textBox.Position = UDim2.new(0, 8, 0, 0)
+textBox.BackgroundTransparency = 1
+textBox.PlaceholderText = "Enter amount..."
+textBox.PlaceholderColor3 = Color3.fromRGB(90, 50, 130)
+textBox.Text = ""
+textBox.TextColor3 = Color3.fromRGB(220, 160, 255)
+textBox.TextSize = 14
+textBox.Font = Enum.Font.Gotham
+textBox.ClearTextOnFocus = false
+
+textBox.Focused:Connect(function()
+    TweenService:Create(iStroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(200, 100, 255)}):Play()
+end)
+
+textBox.FocusLost:Connect(function()
+    TweenService:Create(iStroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(100, 0, 180)}):Play()
+end)
+
+-- Add button
+local addBtn = Instance.new("TextButton", content)
+addBtn.Size = UDim2.new(1, -24, 0, 36)
+addBtn.Position = UDim2.new(0, 12, 0, 142)
+addBtn.BackgroundColor3 = Color3.fromRGB(90, 0, 150)
+addBtn.Text = "+ ADD SHECKLES"
+addBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+addBtn.TextSize = 14
+addBtn.Font = Enum.Font.GothamBold
+addBtn.BorderSizePixel = 0
+Instance.new("UICorner", addBtn).CornerRadius = UDim.new(0, 10)
+
+local addStroke = Instance.new("UIStroke", addBtn)
+addStroke.Color = Color3.fromRGB(180, 60, 255)
+addStroke.Thickness = 2
+
+addBtn.MouseEnter:Connect(function()
+    TweenService:Create(addBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(120, 0, 200)}):Play()
+end)
+
+addBtn.MouseLeave:Connect(function()
+    TweenService:Create(addBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(90, 0, 150)}):Play()
+end)
+
+-- Quick buttons
+local quickAmounts = {100, 500, 1000, 5000}
+local quickRow = Instance.new("Frame", content)
+quickRow.Size = UDim2.new(1, -24, 0, 30)
+quickRow.Position = UDim2.new(0, 12, 0, 186)
+quickRow.BackgroundTransparency = 1
+
+local qLayout = Instance.new("UIListLayout", quickRow)
+qLayout.FillDirection = Enum.FillDirection.Horizontal
+qLayout.Padding = UDim.new(0, 6)
+
+for _, amt in ipairs(quickAmounts) do
+    local qb = Instance.new("TextButton", quickRow)
+    qb.Size = UDim2.new(0.25, -5, 1, 0)
+    qb.BackgroundColor3 = Color3.fromRGB(40, 5, 60)
+    qb.Text = amt >= 1000 and (amt/1000).."K$" or amt.."$"
+    qb.TextColor3 = Color3.fromRGB(200, 100, 255)
+    qb.TextSize = 11
+    qb.Font = Enum.Font.GothamBold
+    qb.BorderSizePixel = 0
+    Instance.new("UICorner", qb).CornerRadius = UDim.new(0, 8)
+    
+    local qs = Instance.new("UIStroke", qb)
+    qs.Color = Color3.fromRGB(120, 0, 200)
+    qs.Thickness = 1.5
+
+    qb.MouseButton1Click:Connect(function()
+        textBox.Text = tostring(amt)
+    end)
+    
+    qb.MouseEnter:Connect(function()
+        TweenService:Create(qb, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(70, 0, 110)}):Play()
+    end)
+    
+    qb.MouseLeave:Connect(function()
+        TweenService:Create(qb, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(40, 5, 60)}):Play()
+    end)
+end
+
+-- Status label
+local statusLabel = Instance.new("TextLabel", content)
+statusLabel.Size = UDim2.new(1, -24, 0, 20)
+statusLabel.Position = UDim2.new(0, 12, 0, 224)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text = "Enter an amount and press Add"
+statusLabel.TextColor3 = Color3.fromRGB(120, 80, 160)
+statusLabel.TextSize = 11
+statusLabel.Font = Enum.Font.Gotham
+statusLabel.TextXAlignment = Enum.TextXAlignment.Center
+
+-- Credit
+local credit = Instance.new("TextLabel", content)
+credit.Size = UDim2.new(1, 0, 0, 20)
+credit.Position = UDim2.new(0, 0, 1, -24)
+credit.BackgroundTransparency = 1
+credit.Text = "made by NefariousScript"
+credit.TextColor3 = Color3.fromRGB(140, 190, 255)
+credit.Font = Enum.Font.Gotham
+credit.TextSize = 13
+credit.TextXAlignment = Enum.TextXAlignment.Center
+
+----------------------------------------------------
+-- ADD SHECKLES LOGIC
+----------------------------------------------------
+local function setStatus(msg, color)
+    statusLabel.Text = msg
+    statusLabel.TextColor3 = color or Color3.fromRGB(120, 80, 160)
+end
+
+local function shakeFrame()
+    local orig = main.Position
+    for i = 1, 6 do
+        task.wait(0.04)
+        main.Position = orig + UDim2.new(0, math.random(-5, 5), 0, 0)
+    end
+    main.Position = orig
+end
+
+local function addSheckles()
+    local input = textBox.Text:match("^%s*(.-)%s*$")
+    local amount = tonumber(input)
+
+    if not amount or amount <= 0 or amount ~= math.floor(amount) then
+        setStatus("⚠ Enter a valid whole number!", Color3.fromRGB(220, 60, 255))
+        task.spawn(shakeFrame)
+        return
+    end
+
+    if amount > 1e9 then
+        setStatus("⚠ Max is 1,000,000,000!", Color3.fromRGB(220, 60, 255))
+        return
+    end
+
+    -- Modify Sheckles
+    Sheckles.Value = Sheckles.Value + amount
+    
+    -- Trigger VFX
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        pcall(function()
+            Networking.ShecklePop.SheckleCollect:FireServer(hrp.Position)
+        end)
+    end
+
+    TweenService:Create(addBtn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(160, 60, 255)}):Play()
+    task.delay(0.25, function()
+        TweenService:Create(addBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(90, 0, 150)}):Play()
+    end)
+
+    local display = amount >= 1000 and (math.floor(amount/100)/10).."K" or tostring(amount)
+    setStatus("✓ Added $" .. display .. " Sheckles!", Color3.fromRGB(180, 80, 255))
+    textBox.Text = ""
+
+    task.delay(3, function()
+        setStatus("Enter an amount and press Add")
+    end)
+end
+
+addBtn.MouseButton1Click:Connect(addSheckles)
+textBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then addSheckles() end
+end)
+
+----------------------------------------------------
+-- MINIMIZE / RESTORE
+----------------------------------------------------
+local minimized = false
+local normalSize = UDim2.new(0, 340, 0, 400)
+local minSize = UDim2.new(0, 136, 0, 42)
+local normalPos = main.Position
+local minPos = UDim2.new(normalPos.X.Scale, normalPos.X.Offset + 204, normalPos.Y.Scale, normalPos.Y.Offset)
+
+local function minimize()
+    minimized = true
+    TweenService:Create(main, TweenInfo.new(0.18, Enum.EasingStyle.Quad), {Size = minSize, Position = minPos}):Play()
+    TweenService:Create(title, TweenInfo.new(0.18), {TextSize = 14}):Play()
+    for _, v in pairs(content:GetChildren()) do
+        if v:IsA("GuiObject") then
+            TweenService:Create(v, TweenInfo.new(0.11), {BackgroundTransparency = 1, TextTransparency = 1}):Play()
+        end
+    end
+    wait(0.13)
+    content.Visible = false
+    for i, bar in ipairs(iconContainer:GetChildren()) do
+        if bar:IsA("Frame") then
+            if i == 2 then
+                bar.Rotation = 90
+            else
+                bar.Visible = false
+            end
+        end
+    end
+end
+
+local function restore()
+    minimized = false
+    content.Visible = true
+    TweenService:Create(main, TweenInfo.new(0.23, Enum.EasingStyle.Quad), {Size = normalSize, Position = normalPos}):Play()
+    TweenService:Create(title, TweenInfo.new(0.18), {TextSize = 27}):Play()
+    for _, v in pairs(content:GetChildren()) do
+        if v:IsA("GuiObject") then
+            TweenService:Create(v, TweenInfo.new(0.18), {BackgroundTransparency = 0, TextTransparency = 0}):Play()
+        end
+    end
+    for _, bar in ipairs(iconContainer:GetChildren()) do
+        if bar:IsA("Frame") then
+            bar.Rotation = 0
+            bar.Visible = true
+        end
+    end
+end
+
+minimizeBtn.MouseButton1Click:Connect(function()
+    if not minimized then minimize() else restore() end
+end)
+
+----------------------------------------------------
+-- DRAGGABLE UI
+----------------------------------------------------
+local dragging, dragInput, dragStart, startPos
+
+local function updateDrag(input)
+    local delta = input.Position - dragStart
+    main.Position = UDim2.new(
+        main.Position.X.Scale, startPos.X.Offset + delta.X,
+        main.Position.Y.Scale, startPos.Y.Offset + delta.Y
+    )
+end
+
+local function beginDrag(input)
+    dragging = true
+    dragStart = input.Position
+    startPos = main.Position
+    input.Changed:Connect(function()
+        if input.UserInputState == Enum.UserInputState.End then
+            dragging = false
+        end
+    end)
+end
+
+titleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        beginDrag(input)
+    end
+end)
+
+titleBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input == dragInput then
+        updateDrag(input)
+    end
+end)
+
+-- HOTKEY (Right Ctrl)
+UserInputServic 5)
 balanceTopLabel.BackgroundTransparency = 1
 balanceTopLabel.Text = "CURRENT SHECKLES"
 balanceTopLabel.TextColor3 = Color3.fromRGB(140, 80, 200)
