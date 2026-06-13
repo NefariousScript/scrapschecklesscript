@@ -1,40 +1,548 @@
--- NEFARIOUS HUB - ULTRA SAFE VERSION
-print("[NefariousHub] Script starting...")
-
--- Wait for player to fully load
+-- SERVICES
 local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-
-if not player then
-    print("[NefariousHub] ERROR: No player found!")
-    return
-end
-
-print("[NefariousHub] Player found: " .. player.Name)
-
--- WAIT FOR EVERYTHING TO LOAD
-print("[NefariousHub] Waiting for game to load...")
-wait(2) -- Give the game time to load
-
--- Now get services
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-
-print("[NefariousHub] Services loaded")
+local player = Players.LocalPlayer
 
 ----------------------------------------------------
--- GET LEADERSTATS & SHECKLES
-----------------------------------------------------
-local Sheckles = nil
-local maxWait = 10
-local startTime = tick()
+-- LOADING SCREEN (INTEGRATED)
+local function showLoadingScreen()
+    local loadingGui = Instance.new("ScreenGui")
+    loadingGui.Name = "NefariousLoadingUI"
+    loadingGui.Parent = player:WaitForChild("PlayerGui")
+    loadingGui.ResetOnSpawn = false
+    loadingGui.IgnoreGuiInset = true
 
-while not Sheckles and (tick() - startTime) < maxWait do
-    pcall(function()
-        if player:FindFirstChild("leaderstats") then
-            local ls = player.leaderstats
-            if ls:FindFirstChild("Sheckles") then
-                Sheckles = ls.Sheckles
+    local bg = Instance.new("Frame", loadingGui)
+    bg.Size = UDim2.new(1, 0, 1, 0)
+    bg.Position = UDim2.new(0, 0, 0, 0)
+    bg.BackgroundColor3 = Color3.fromRGB(32, 4, 46)
+    bg.BackgroundTransparency = 0.22
+
+    local loadingMain = Instance.new("Frame", bg)
+    loadingMain.Size = UDim2.new(0, 410, 0, 170)
+    loadingMain.Position = UDim2.new(0.5, -205, 0.5, -85)
+    loadingMain.BackgroundColor3 = Color3.fromRGB(24, 0, 32)
+    loadingMain.BorderSizePixel = 0
+    loadingMain.BackgroundTransparency = 0.04
+    Instance.new("UICorner", loadingMain).CornerRadius = UDim.new(0, 22)
+
+    local title = Instance.new("TextLabel", loadingMain)
+    title.Position = UDim2.new(0, 74, 0, 28)
+    title.Size = UDim2.new(1, -90, 0, 34)
+    title.BackgroundTransparency = 1
+    title.Text = "NEFARIOUS SCRIPT"
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 28
+    title.TextColor3 = Color3.fromRGB(255,255,255)
+    title.TextStrokeTransparency = 0.7
+
+    local barBack = Instance.new("Frame", loadingMain)
+    barBack.Size = UDim2.new(0.87, 0, 0, 32)
+    barBack.Position = UDim2.new(0.065, 0, 0, 80)
+    barBack.BackgroundColor3 = Color3.fromRGB(38, 38, 60)
+    barBack.BorderSizePixel = 0
+    Instance.new("UICorner", barBack).CornerRadius = UDim.new(0, 15)
+
+    local bar = Instance.new("Frame", barBack)
+    bar.Size = UDim2.new(0, 0, 1, 0)
+    bar.Position = UDim2.new(0, 0, 0, 0)
+    bar.BackgroundColor3 = Color3.fromRGB(128, 56, 255)
+    bar.BorderSizePixel = 0
+    Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 15)
+
+    local loadingText = Instance.new("TextLabel", loadingMain)
+    loadingText.Position = UDim2.new(0.065, 0, 0, 122)
+    loadingText.Size = UDim2.new(0.87, 0, 0, 22)
+    loadingText.BackgroundTransparency = 1
+    loadingText.Text = "Loading..."
+    loadingText.Font = Enum.Font.GothamBold
+    loadingText.TextSize = 18
+    loadingText.TextColor3 = Color3.fromRGB(180,130,255)
+    loadingText.TextStrokeTransparency = 0.7
+    loadingText.TextXAlignment = Enum.TextXAlignment.Left
+
+    local subText = Instance.new("TextLabel", loadingMain)
+    subText.Position = UDim2.new(0.065, 0, 1, -26)
+    subText.Size = UDim2.new(0.87, 0, 0, 20)
+    subText.BackgroundTransparency = 1
+    subText.Text = "Subscribe To NefariousScript"
+    subText.TextXAlignment = Enum.TextXAlignment.Left
+    subText.Font = Enum.Font.GothamBold
+    subText.TextSize = 16
+    subText.TextColor3 = Color3.fromRGB(255,255,255)
+    subText.TextStrokeTransparency = 0.7
+
+    -- Animate the bar
+    bar.Size = UDim2.new(0,0,1,0)
+    local totalTime = 8
+    local steps = 50
+    for i = 1, steps do
+        local progress = i / steps
+        TweenService:Create(bar, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {Size = UDim2.new(progress,0,1,0)}):Play()
+        loadingText.Text = "Loading" .. string.rep(".", (i%4))
+        wait(totalTime/steps)
+    end
+    loadingText.Text = "Loaded!"
+
+    -- PROPER FADE OUT
+    local function fadeOutGuiObjects(root, duration)
+        for _, obj in ipairs(root:GetDescendants()) do
+            if obj:IsA("GuiObject") then
+                if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+                    TweenService:Create(obj, TweenInfo.new(duration), {TextTransparency = 1}):Play()
+                end
+                if obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+                    TweenService:Create(obj, TweenInfo.new(duration), {ImageTransparency = 1}):Play()
+                end
+                TweenService:Create(obj, TweenInfo.new(duration), {BackgroundTransparency = 1}):Play()
+            end
+        end
+    end
+
+    wait(0.6)
+    fadeOutGuiObjects(loadingGui, 0.7)
+    wait(0.75)
+    loadingGui:Destroy()
+end
+
+-- SHOW LOADING FIRST, THEN MAIN GUI
+showLoadingScreen()
+
+----------------------------------------------------
+-- YOUR WORKING SHECKLES SCRIPT
+----------------------------------------------------
+
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+-- Asset refs (game's own VFX)
+local PopVFX = game.ReplicatedStorage.Assets.PopVFX
+local Poof   = game.ReplicatedStorage.Assets.Poof
+local Temp   = game.Workspace.Temporary
+
+-- Leaderstats ref
+local leaderstats = player:WaitForChild("leaderstats")
+local Sheckles    = leaderstats:WaitForChild("Sheckles")
+
+local playerGui = player:WaitForChild("PlayerGui")
+
+------------------------------------------------------------------------
+-- VFX helpers
+------------------------------------------------------------------------
+
+local function spawnPopVFX(position)
+	task.spawn(function()
+		local model = Instance.new("Model")
+		model.Parent = Temp
+		local vfx = PopVFX:Clone()
+		vfx.Parent = model
+		model:ScaleTo(0.5)
+		vfx.Position = position
+		task.wait()
+		for _, v in pairs(vfx:GetDescendants()) do
+			if v:IsA("ParticleEmitter") then
+				v:Emit(v:GetAttribute("EmitCount") or 10)
+			end
+		end
+		game.Debris:AddItem(model, 3)
+	end)
+end
+
+local function spawnPoofVFX(position)
+	task.spawn(function()
+		local vfx = Poof:Clone()
+		vfx.Parent = Temp
+		vfx.Position = position
+		task.wait()
+		for _, v in pairs(vfx:GetDescendants()) do
+			if v:IsA("ParticleEmitter") then
+				v:Emit(math.random(7, 11))
+			end
+		end
+		game.Debris:AddItem(vfx, 3)
+	end)
+end
+
+-- Burst several PopVFX around the player
+local function burstVFX(count)
+	local base = hrp.Position
+	for i = 1, count do
+		local offset = Vector3.new(
+			math.random(-4, 4),
+			math.random(0, 3),
+			math.random(-4, 4)
+		)
+		task.delay(i * 0.08, function()
+			spawnPopVFX(base + offset)
+		end)
+	end
+	spawnPoofVFX(base + Vector3.new(0, 1, 0))
+end
+
+------------------------------------------------------------------------
+-- GUI
+------------------------------------------------------------------------
+
+-- Remove existing GUI if re-running
+local existing = playerGui:FindFirstChild("ShecklesAdderGui")
+if existing then existing:Destroy() end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ShecklesAdderGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = playerGui
+
+-- Main frame
+local Frame = Instance.new("Frame")
+Frame.Name = "MainFrame"
+Frame.Size = UDim2.new(0, 320, 0, 310)
+Frame.Position = UDim2.new(0.5, -160, 0.5, -155)
+Frame.BackgroundColor3 = Color3.fromRGB(22, 14, 5)
+Frame.BorderSizePixel = 0
+Frame.Active = true
+Frame.Draggable = true
+Frame.Parent = ScreenGui
+
+Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 14)
+
+local Stroke = Instance.new("UIStroke", Frame)
+Stroke.Color = Color3.fromRGB(184, 134, 11)
+Stroke.Thickness = 3
+
+-- Title bar
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 42)
+TitleBar.BackgroundColor3 = Color3.fromRGB(40, 25, 5)
+TitleBar.BorderSizePixel = 0
+TitleBar.Parent = Frame
+Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 14)
+
+-- patch bottom corners of title bar
+local TitlePatch = Instance.new("Frame")
+TitlePatch.Size = UDim2.new(1, 0, 0.5, 0)
+TitlePatch.Position = UDim2.new(0, 0, 0.5, 0)
+TitlePatch.BackgroundColor3 = Color3.fromRGB(40, 25, 5)
+TitlePatch.BorderSizePixel = 0
+TitlePatch.Parent = TitleBar
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(1, -40, 1, 0)
+TitleLabel.Position = UDim2.new(0, 12, 0, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "🌱 Sheckles Adder"
+TitleLabel.TextColor3 = Color3.fromRGB(245, 197, 24)
+TitleLabel.TextSize = 17
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.Parent = TitleBar
+
+-- Minimize button
+local minimizeBtn = Instance.new("TextButton", TitleBar)
+minimizeBtn.Size = UDim2.new(0, 28, 0, 28)
+minimizeBtn.Position = UDim2.new(1, -34, 0.5, -14)
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+minimizeBtn.Text = "-"
+minimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+minimizeBtn.TextSize = 16
+minimizeBtn.Font = Enum.Font.GothamBold
+minimizeBtn.BorderSizePixel = 0
+Instance.new("UICorner", minimizeBtn).CornerRadius = UDim.new(0, 6)
+
+-- Close button
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 28, 0, 28)
+CloseBtn.Position = UDim2.new(1, -66, 0.5, -14)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+CloseBtn.Text = "✕"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.TextSize = 13
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.BorderSizePixel = 0
+CloseBtn.Parent = TitleBar
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
+CloseBtn.MouseButton1Click:Connect(function()
+	ScreenGui:Destroy()
+end)
+
+-- Balance display
+local BalanceBg = Instance.new("Frame")
+BalanceBg.Size = UDim2.new(1, -24, 0, 58)
+BalanceBg.Position = UDim2.new(0, 12, 0, 52)
+BalanceBg.BackgroundColor3 = Color3.fromRGB(10, 6, 0)
+BalanceBg.BorderSizePixel = 0
+BalanceBg.Parent = Frame
+Instance.new("UICorner", BalanceBg).CornerRadius = UDim.new(0, 10)
+local BStroke = Instance.new("UIStroke", BalanceBg)
+BStroke.Color = Color3.fromRGB(90, 65, 20)
+BStroke.Thickness = 1.5
+
+local BalanceLabel = Instance.new("TextLabel")
+BalanceLabel.Size = UDim2.new(1, 0, 0.45, 0)
+BalanceLabel.Position = UDim2.new(0, 0, 0, 6)
+BalanceLabel.BackgroundTransparency = 1
+BalanceLabel.Text = "CURRENT SHECKLES"
+BalanceLabel.TextColor3 = Color3.fromRGB(140, 120, 80)
+BalanceLabel.TextSize = 10
+BalanceLabel.Font = Enum.Font.GothamBold
+BalanceLabel.Parent = BalanceBg
+
+local BalanceValue = Instance.new("TextLabel")
+BalanceValue.Size = UDim2.new(1, 0, 0.6, 0)
+BalanceValue.Position = UDim2.new(0, 0, 0.38, 0)
+BalanceValue.BackgroundTransparency = 1
+BalanceValue.Text = "¢" .. tostring(Sheckles.Value)
+BalanceValue.TextColor3 = Color3.fromRGB(255, 248, 231)
+BalanceValue.TextSize = 22
+BalanceValue.Font = Enum.Font.GothamBold
+BalanceValue.Parent = BalanceBg
+
+-- Auto-update balance display
+Sheckles.Changed:Connect(function(val)
+	BalanceValue.Text = "¢" .. tostring(val)
+	TweenService:Create(BalanceValue,
+		TweenInfo.new(0.15),
+		{TextColor3 = Color3.fromRGB(255, 215, 0)}
+	):Play()
+	task.delay(0.3, function()
+		TweenService:Create(BalanceValue,
+			TweenInfo.new(0.25),
+			{TextColor3 = Color3.fromRGB(255, 248, 231)}
+		):Play()
+	end)
+end)
+
+-- Amount input
+local InputBg = Instance.new("Frame")
+InputBg.Size = UDim2.new(1, -24, 0, 40)
+InputBg.Position = UDim2.new(0, 12, 0, 122)
+InputBg.BackgroundColor3 = Color3.fromRGB(10, 6, 0)
+InputBg.BorderSizePixel = 0
+InputBg.Parent = Frame
+Instance.new("UICorner", InputBg).CornerRadius = UDim.new(0, 10)
+local IStroke = Instance.new("UIStroke", InputBg)
+IStroke.Color = Color3.fromRGB(90, 65, 20)
+IStroke.Thickness = 1.5
+
+local TextBox = Instance.new("TextBox")
+TextBox.Size = UDim2.new(1, -16, 1, 0)
+TextBox.Position = UDim2.new(0, 8, 0, 0)
+TextBox.BackgroundTransparency = 1
+TextBox.PlaceholderText = "Enter amount of sheckles..."
+TextBox.PlaceholderColor3 = Color3.fromRGB(90, 80, 60)
+TextBox.Text = ""
+TextBox.TextColor3 = Color3.fromRGB(255, 248, 231)
+TextBox.TextSize = 15
+TextBox.Font = Enum.Font.Gotham
+TextBox.ClearTextOnFocus = false
+TextBox.Parent = InputBg
+
+TextBox.Focused:Connect(function()
+	TweenService:Create(IStroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(245, 197, 24)}):Play()
+end)
+TextBox.FocusLost:Connect(function()
+	TweenService:Create(IStroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(90, 65, 20)}):Play()
+end)
+
+-- Add button
+local AddBtn = Instance.new("TextButton")
+AddBtn.Size = UDim2.new(1, -24, 0, 40)
+AddBtn.Position = UDim2.new(0, 12, 0, 172)
+AddBtn.BackgroundColor3 = Color3.fromRGB(46, 160, 60)
+AddBtn.Text = "+ ADD SHECKLES"
+AddBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+AddBtn.TextSize = 15
+AddBtn.Font = Enum.Font.GothamBold
+AddBtn.BorderSizePixel = 0
+AddBtn.Parent = Frame
+Instance.new("UICorner", AddBtn).CornerRadius = UDim.new(0, 10)
+local ABStroke = Instance.new("UIStroke", AddBtn)
+ABStroke.Color = Color3.fromRGB(25, 90, 35)
+ABStroke.Thickness = 2.5
+
+-- Quick amount buttons
+local quickAmounts = {100, 500, 1000, 5000}
+local QuickRow = Instance.new("Frame")
+QuickRow.Size = UDim2.new(1, -24, 0, 32)
+QuickRow.Position = UDim2.new(0, 12, 0, 224)
+QuickRow.BackgroundTransparency = 1
+QuickRow.Parent = Frame
+
+local QLayout = Instance.new("UIListLayout", QuickRow)
+QLayout.FillDirection = Enum.FillDirection.Horizontal
+QLayout.Padding = UDim.new(0, 6)
+
+for _, amt in ipairs(quickAmounts) do
+	local qb = Instance.new("TextButton")
+	qb.Size = UDim2.new(0.25, -5, 1, 0)
+	qb.BackgroundColor3 = Color3.fromRGB(35, 22, 5)
+	qb.Text = amt >= 1000 and (amt/1000).."K¢" or amt.."¢"
+	qb.TextColor3 = Color3.fromRGB(245, 197, 24)
+	qb.TextSize = 12
+	qb.Font = Enum.Font.GothamBold
+	qb.BorderSizePixel = 0
+	qb.Parent = QuickRow
+	Instance.new("UICorner", qb).CornerRadius = UDim.new(0, 8)
+	local qs = Instance.new("UIStroke", qb)
+	qs.Color = Color3.fromRGB(100, 72, 18)
+	qs.Thickness = 1.5
+
+	qb.MouseButton1Click:Connect(function()
+		TextBox.Text = tostring(amt)
+	end)
+	qb.MouseEnter:Connect(function()
+		TweenService:Create(qb, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(60, 40, 8)}):Play()
+	end)
+	qb.MouseLeave:Connect(function()
+		TweenService:Create(qb, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(35, 22, 5)}):Play()
+	end)
+end
+
+-- Status label
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(1, -24, 0, 24)
+StatusLabel.Position = UDim2.new(0, 12, 0, 268)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = "Enter an amount and press Add"
+StatusLabel.TextColor3 = Color3.fromRGB(120, 110, 90)
+StatusLabel.TextSize = 11
+StatusLabel.Font = Enum.Font.Gotham
+StatusLabel.Parent = Frame
+
+------------------------------------------------------------------------
+-- Core: Add Sheckles logic
+------------------------------------------------------------------------
+
+local function setStatus(msg, color)
+	StatusLabel.Text = msg
+	StatusLabel.TextColor3 = color or Color3.fromRGB(120, 110, 90)
+end
+
+local function shakeFrame()
+	local orig = Frame.Position
+	for i = 1, 6 do
+		task.wait(0.04)
+		Frame.Position = orig + UDim2.new(0, math.random(-5,5), 0, 0)
+	end
+	Frame.Position = orig
+end
+
+local function addSheckles()
+	local input = TextBox.Text:match("^%s*(.-)%s*$")
+	local amount = tonumber(input)
+
+	if not amount or amount <= 0 or amount ~= math.floor(amount) then
+		setStatus("⚠ Enter a valid whole number!", Color3.fromRGB(220, 80, 80))
+		task.spawn(shakeFrame)
+		return
+	end
+
+	if amount > 1e9 then
+		setStatus("⚠ Max is 1,000,000,000!", Color3.fromRGB(220, 80, 80))
+		return
+	end
+
+	Sheckles.Value = Sheckles.Value + amount
+	burstVFX(math.min(math.ceil(amount / 500), 8))
+
+	TweenService:Create(AddBtn, TweenInfo.new(0.1), {
+		BackgroundColor3 = Color3.fromRGB(80, 210, 100)
+	}):Play()
+	task.delay(0.25, function()
+		TweenService:Create(AddBtn, TweenInfo.new(0.2), {
+			BackgroundColor3 = Color3.fromRGB(46, 160, 60)
+		}):Play()
+	end)
+
+	local display = amount >= 1000 and (math.floor(amount/100)/10).."K" or tostring(amount)
+	setStatus("✅ Added ¢" .. display .. " Sheckles!", Color3.fromRGB(100, 220, 100))
+	TextBox.Text = ""
+
+	task.delay(3, function()
+		setStatus("Enter an amount and press Add")
+	end)
+end
+
+AddBtn.MouseButton1Click:Connect(addSheckles)
+TextBox.FocusLost:Connect(function(enterPressed)
+	if enterPressed then addSheckles() end
+end)
+
+AddBtn.MouseEnter:Connect(function()
+	TweenService:Create(AddBtn, TweenInfo.new(0.15), {
+		BackgroundColor3 = Color3.fromRGB(60, 190, 75)
+	}):Play()
+end)
+AddBtn.MouseLeave:Connect(function()
+	TweenService:Create(AddBtn, TweenInfo.new(0.15), {
+		BackgroundColor3 = Color3.fromRGB(46, 160, 60)
+	}):Play()
+end)
+
+------------------------------------------------------------------------
+-- MINIMIZE / RESTORE FUNCTION
+------------------------------------------------------------------------
+local minimized = false
+local normalSize = UDim2.new(0, 320, 0, 310)
+local minSize = UDim2.new(0, 136, 0, 42)
+local normalPos = Frame.Position
+local minPos = UDim2.new(normalPos.X.Scale, normalPos.X.Offset + 184, normalPos.Y.Scale, normalPos.Y.Offset)
+
+local function minimize()
+    minimized = true
+    TweenService:Create(Frame, TweenInfo.new(0.18, Enum.EasingStyle.Quad), {Size = minSize, Position = minPos}):Play()
+    TweenService:Create(TitleLabel, TweenInfo.new(0.18), {TextSize = 14}):Play()
+    
+    for _, v in pairs(Frame:GetChildren()) do
+        if v:IsA("GuiObject") and v ~= TitleBar and v ~= minimizeBtn and v ~= CloseBtn then
+            TweenService:Create(v, TweenInfo.new(0.11), {BackgroundTransparency = 1, TextTransparency = 1}):Play()
+        end
+    end
+    
+    wait(0.13)
+    for _, v in pairs(Frame:GetChildren()) do
+        if v:IsA("GuiObject") and v ~= TitleBar and v ~= minimizeBtn and v ~= CloseBtn then
+            v.Visible = false
+        end
+    end
+    
+    minimizeBtn.Text = "+"
+end
+
+local function restore()
+    minimized = false
+    for _, v in pairs(Frame:GetChildren()) do
+        if v:IsA("GuiObject") and v ~= TitleBar and v ~= minimizeBtn and v ~= CloseBtn then
+            v.Visible = true
+        end
+    end
+    
+    TweenService:Create(Frame, TweenInfo.new(0.23, Enum.EasingStyle.Quad), {Size = normalSize, Position = normalPos}):Play()
+    TweenService:Create(TitleLabel, TweenInfo.new(0.18), {TextSize = 17}):Play()
+    
+    for _, v in pairs(Frame:GetChildren()) do
+        if v:IsA("GuiObject") and v ~= TitleBar and v ~= minimizeBtn and v ~= CloseBtn then
+            TweenService:Create(v, TweenInfo.new(0.18), {BackgroundTransparency = 0, TextTransparency = 0}):Play()
+        end
+    end
+    
+    minimizeBtn.Text = "-"
+end
+
+minimizeBtn.MouseButton1Click:Connect(function()
+    if not minimized then minimize() else restore() end
+end)
+
+-- Slide-in animation on open
+Frame.Position = UDim2.new(0.5, -160, -0.5, 0)
+TweenService:Create(Frame,
+	TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+	{Position = UDim2.new(0.5, -160, 0.5, -155)}
+):Play()
+
+print("[ShecklesAdder] GUI loaded! Drag the panel to move it.")                Sheckles = ls.Sheckles
                 print("[NefariousHub] ✓ Sheckles found!")
             end
         end
